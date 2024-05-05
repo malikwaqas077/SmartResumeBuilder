@@ -20,6 +20,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"],
+  "include": ["src", "convertToBase64.js", "convertToBase64.js"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
