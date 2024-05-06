@@ -9,6 +9,7 @@ interface UserData {
     github: string;
     skills: { name: string; technologies: string }[];
     education: { institution: string; degree: string; yearCompleted: string; cgpa: string }[];
+    experience: { companyName: string; technologies: string; position: string; duration: string; city: string; softwareName: string; duties: string[] }[];
     honors: string;
     coursework: string;
     hobbies: string;
@@ -73,6 +74,31 @@ export function generatePDF(userData: UserData) {
             }
         }
         currentY += 6;
+    });
+
+    // Experience Section in left column
+    doc.setFontSize(14).setFont("helvetica", 'bold');
+    doc.text("Experience", leftColumnStartX, currentY);
+    currentY += 8;
+    userData.experience.forEach(exp => {
+        doc.setFontSize(12).setFont("helvetica", 'bold'); // Company name in bold and big
+        doc.text(`${exp.companyName}`, leftColumnStartX, currentY); // Company Name
+        currentY += 6;
+        doc.setFontSize(10).setFont("helvetica", 'normal'); // Position, duration, and city
+        doc.text(`${exp.position}, ${exp.duration}, ${exp.city}`, leftColumnStartX, currentY); // Position, Duration, City
+        currentY += 6;
+        doc.setFontSize(10).setFont("helvetica", 'bold'); // Technologies in bold
+        doc.text(`Technologies: ${exp.technologies}`, leftColumnStartX, currentY); // Technologies
+        currentY += 6;
+        doc.setFontSize(10).setFont("helvetica", 'bold'); // Software Name in bold
+        doc.text(`Software: ${exp.softwareName}`, leftColumnStartX, currentY); // Software Name
+        currentY += 6;
+        doc.setFontSize(10).setFont("helvetica", 'normal'); // Duties in normal font
+        exp.duties.forEach(duty => {
+            doc.text(`• ${duty}`, leftColumnStartX + 10, currentY); // Bullet point for each duty
+            currentY += 4; // Increase Y position for the next duty
+        });
+        currentY += 10; // Increase Y position for the next experience entry
     });
 
     // Education Section in right column, starting at the same Y as skills
