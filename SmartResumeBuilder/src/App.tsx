@@ -1,91 +1,90 @@
-import { useState } from 'react';
-import './App.css';  // Ensure Tailwind CSS is correctly imported
-import { generatePDF } from './generatePdf';
+// generatepdf.ts
+import { jsPDF } from "jspdf";
+import icons from './icons.json'; // Assumes Base64 encoded images of icons
 
-function App() {
-  const [userData, setUserData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    linkedin: '',
-    github: '',
-    skills: [{ name: '', technologies: '' }],
-    experience: [{ title: '', details: '' }],
-    education: [{ institution: '', degree: '' }],
-    honors: '',
-    coursework: '',
-    hobbies: ''
+
+interface UserData {
+  name: string;
+  email: string;
+  phone: string;
+  linkedin: string;
+  github: string;
+  skills: { name: string; technologies: string }[];
+  education: { institution: string; degree: string; yearCompleted: string; cgpa: string }[]; // Updated for education
+  honors: string;
+  coursework: string;
+  hobbies: string;
+}
+
+export function generatePDF(userData: UserData) {
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  let currentY = 20;
+
+  // Header with name
+  doc.setFontSize(20).setFont("helvetica", 'bold');
+  doc.text(userData.name, pageWidth / 2, currentY, { align: "center" }); // Centered name title
+  currentY += 10;
+
+  // Contact details in one line with icons
+  let startX = 20; // Start position for icons and text
+  const iconSize = 5; // Icon dimensions
+
+  // Function to add icons and text
+  function addIconWithText(icon, text, x, y) {
+    doc.addImage(icon, 'PNG', x, y, iconSize, iconSize);
+    doc.setFontSize(10).setFont("helvetica", 'normal');
+    doc.text(text, x + iconSize + 2, y + iconSize / 2 + 1); // Adjust text position next to the icon
+  }
+
+  // Place each icon with text
+  addIconWithText(icons.email, userData.email, startX, currentY);
+  startX += doc.getTextWidth(userData.email) + 15;
+  addIconWithText(icons.phone, userData.phone, startX, currentY);
+  startX += doc.getTextWidth(userData.phone) + 15;
+  addIconWithText(icons.linkedin, userData.linkedin, startX, currentY);
+  startX += doc.getTextWidth(userData.linkedin) + 15;
+  addIconWithText(icons.github, userData.github, startX, currentY);
+  currentY += 15;
+
+  // Calculating column widths and positions
+  const leftColumnWidth = pageWidth * 0.66;
+  const rightColumnWidth = pageWidth * 0.34;
+  const leftColumnStartX = 10;
+  const rightColumnStartX = leftColumnStartX + leftColumnWidth;
+  let rightColumnY = currentY;  // Initialize right column Y to match left after icons
+
+  // Skills Section in left column
+  doc.setFontSize(12).setFont("helvetica", 'bold');
+  doc.text("Skills & Technologies", leftColumnStartX, currentY);
+  currentY += 6;
+  userData.skills.forEach(skill => {
+    doc.setFontSize(10).setFont("helvetica", 'normal');
+    doc.text(`${skill.name}: ${skill.technologies.split(',').map(tech => `• ${tech.trim()}`).join(' ')}`, leftColumnStartX, currentY, { maxWidth: leftColumnWidth - 20 });
+    currentY += 6;
   });
 
-  const handleChange = (e, index, section) => {
-    const { name, value } = e.target;
-    if (section) {
-      const updatedSection = [...userData[section]];
-      updatedSection[index][name] = value;
-      setUserData({ ...userData, [section]: updatedSection });
-    } else {
-      setUserData({ ...userData, [name]: value });
-    }
-  };
+  // Education Section in right column, starting at the same Y as skills
+  doc.setFontSize(12).setFont("helvetica", 'bold');
+  doc.text("Education", rightColumnStartX, rightColumnY); // Updated for education
+  rightColumnY += 12;
 
-  const handleAddSection = (section) => {
-    const newEntry = section === 'skills' ? { name: '', technologies: '' } :
-                     section === 'experience' ? { title: '', details: '' } :
-                     { institution: '', degree: '' }; // Extendable for other sections
-    setUserData(prev => ({ ...prev, [section]: [...prev[section], newEntry] }));
-  };
+  // Loop through education entries
+  userData.education.forEach(edu => {
+    doc.setFontSize(14).setFont("helvetica", 'bold'); // Degree in bold and big
+    doc.text(`${edu.degree}`, rightColumnStartX, rightColumnY); // Degree
+    rightColumnY += 8;
+    
+    doc.setFontSize(10).setFont("helvetica", 'bold'); // Institution in less bold
+    doc.text(`${edu.institution}`, rightColumnStartX, rightColumnY); // Institution
+    rightColumnY += 6;
+    
+    doc.setFontSize(10).setFont("helvetica", 'normal'); // Year completed and CGPA
+    doc.text(`${edu.yearCompleted} | CGPA: ${edu.cgpa}`, rightColumnStartX, rightColumnY); // Year Completed and CGPA
+    rightColumnY += 10; // Increase Y position for the next entry
+  });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    generatePDF(userData);
-  };
+  // Continue with other sections...
 
-  return (
-    <div className="App">
-      <h1 className="text-xl font-bold text-center my-4">Welcome to Smart CV Builder</h1>
-      <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-6">
-        {/* Basic Contact Information */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input className="border p-2 rounded" type="text" placeholder="Name" name="name" value={userData.name} onChange={handleChange} />
-          <input className="border p-2 rounded" type="email" placeholder="Email" name="email" value={userData.email} onChange={handleChange} />
-          <input className="border p-2 rounded" type="text" placeholder="Phone" name="phone" value={userData.phone} onChange={handleChange} />
-          <input className="border p-2 rounded" type="text" placeholder="LinkedIn Profile" name="linkedin" value={userData.linkedin} onChange={handleChange} />
-          <input className="border p-2 rounded" type="text" placeholder="GitHub Profile" name="github" value={userData.github} onChange={handleChange} />
-        </div>
-
-        {/* Dynamic Skill Entries */}
-        <DynamicSection title="Skills and Technologies" section="skills" entries={userData.skills} handleChange={handleChange} handleAdd={() => handleAddSection('skills')} />
-        
-        {/* Dynamic Experience Entries */}
-        <DynamicSection title="Experience" section="experience" entries={userData.experience} handleChange={handleChange} handleAdd={() => handleAddSection('experience')} />
-
-        {/* Dynamic Education Entries */}
-        <DynamicSection title="Education" section="education" entries={userData.education} handleChange={handleChange} handleAdd={() => handleAddSection('education')} />
-
-        {/* Single Entry Sections */}
-        <textarea className="border p-2 rounded" placeholder="Honors and Awards" name="honors" value={userData.honors} onChange={handleChange} />
-        <textarea className="border p-2 rounded" placeholder="Relevant Coursework" name="coursework" value={userData.coursework} onChange={handleChange} />
-        <textarea className="border p-2 rounded" placeholder="Hobbies" name="hobbies" value={userData.hobbies} onChange={handleChange} />
-
-        <button type="submit" className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">Generate PDF</button>
-      </form>
-    </div>
-  );
+  doc.save('Resume.pdf');
 }
-
-function DynamicSection({ title, section, entries, handleChange, handleAdd }) {
-  return (
-    <div>
-      <h2 className="text-lg font-semibold">{title}</h2>
-      {entries.map((entry, index) => (
-        <div key={index} className="grid grid-cols-2 gap-4 mb-2">
-          <input className="border p-2 rounded" type="text" placeholder="Title or Name" name="name" value={entry.name} onChange={(e) => handleChange(e, index, section)} />
-          <input className="border p-2 rounded" type="text" placeholder="Details or Technologies" name="technologies" value={entry.technologies} onChange={(e) => handleChange(e, index, section)} />
-        </div>
-      ))}
-      <button type="button" onClick={handleAdd} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Add Another Entry</button>
-    </div>
-  );
-}
-
-export default App;
