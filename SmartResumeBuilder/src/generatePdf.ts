@@ -28,12 +28,12 @@ export function generatePDF(userData: UserData) {
     let startX = 20; // Start position for icons and text
     const iconSize = 5; // Icon dimensions
 
-    // Function to add icons and text
-    function addIconWithText(icon, text, url, x, y) {
+    // Function to add icons and text with explicit types
+    const addIconWithText = (icon: string, text: string, url: string, x: number, y: number) => {
         doc.addImage(icon, 'PNG', x, y, iconSize, iconSize);
         doc.setFontSize(10).setFont("helvetica", 'normal');
         doc.textWithLink(text, x + iconSize + 2, y + iconSize / 2 + 1, { url });
-    }
+    };
 
     // Extracting the user names from the URLs
     const linkedinUsername = userData.linkedin.substring(userData.linkedin.lastIndexOf('/') + 1);
