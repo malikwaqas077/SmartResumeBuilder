@@ -75,31 +75,61 @@ export function generatePDF(userData: UserData) {
         }
         currentY += 6;
     });
-
-    // Experience Section in left column
+    currentY+=2;
+    /// Experience Section in left column
     doc.setFontSize(14).setFont("helvetica", 'bold');
     doc.text("Experience", leftColumnStartX, currentY);
-    currentY += 8;
+    currentY += 6;
+
     userData.experience.forEach(exp => {
-        doc.setFontSize(12).setFont("helvetica", 'bold'); // Company name in bold and big
-        doc.text(`${exp.companyName}`, leftColumnStartX, currentY); // Company Name
-        currentY += 6;
-        doc.setFontSize(10).setFont("helvetica", 'normal'); // Position, duration, and city
-        doc.text(`${exp.position}, ${exp.duration}, ${exp.city}`, leftColumnStartX, currentY); // Position, Duration, City
-        currentY += 6;
-        doc.setFontSize(10).setFont("helvetica", 'bold'); // Technologies in bold
-        doc.text(`Technologies: ${exp.technologies}`, leftColumnStartX, currentY); // Technologies
-        currentY += 6;
-        doc.setFontSize(10).setFont("helvetica", 'bold'); // Software Name in bold
-        doc.text(`Software: ${exp.softwareName}`, leftColumnStartX, currentY); // Software Name
-        currentY += 6;
-        doc.setFontSize(10).setFont("helvetica", 'normal'); // Duties in normal font
+        // Set font size and style for the position with technologies in normal font
+        doc.setFontSize(10).setFont("helvetica", 'bold');
+        let positionTechPart = `${exp.position} (${exp.technologies})`; // Combine position with technologies
+        doc.text(positionTechPart, leftColumnStartX, currentY); // Print position and technologies
+        currentY += 6; // Move to the next line
+     
+        // Set font size and style for the company name in bold
+        doc.setFontSize(10).setFont("helvetica", 'normal');
+        let companyPart = `${exp.companyName}, ${exp.duration}, ${exp.city}`; // Combine company name, duration, and city
+        doc.text(companyPart, leftColumnStartX, currentY); // Print company name, duration, and city
+        currentY += 6; // Move to the next line
+    
+        // Set font size and style for the software name in bold
+        doc.setFont("helvetica", 'bold');
+        doc.text(`${exp.softwareName}`, leftColumnStartX, currentY); // Software Name
+        currentY += 6; // Move to the next line
+    
+        // Print duties in normal font with text wrapping and indentation for wrapped lines
+        doc.setFontSize(10).setFont("helvetica", 'normal');
         exp.duties.forEach(duty => {
-            doc.text(`• ${duty}`, leftColumnStartX + 10, currentY); // Bullet point for each duty
-            currentY += 4; // Increase Y position for the next duty
+            const bullet = '• ';
+            const dutyText = duty;
+            const bulletWidth = doc.getTextWidth(bullet);
+            const dutyX = leftColumnStartX + 5; // Starting X for bullet
+            const textX = dutyX + bulletWidth; // Starting X for text after bullet
+            const maxWidth = leftColumnWidth - textX; // Maximum width for text
+    
+            // Split text to fit within maxWidth, and handle indent for wrapped lines
+            const lines = doc.splitTextToSize(dutyText, maxWidth);
+            for (let i = 0; i < lines.length; i++) {
+                if (i === 0) {
+                    // First line with bullet
+                    doc.text(bullet + lines[i], dutyX, currentY);
+                } else {
+                    // Subsequent lines indented beneath the bullet
+                    doc.text(lines[i], textX, currentY);
+                }
+                currentY += 4; // Increment Y position for each line
+            }
         });
-        currentY += 10; // Increase Y position for the next experience entry
+        currentY += 10; // Space before next experience entry
     });
+    
+    
+    
+    
+
+
 
     // Education Section in right column, starting at the same Y as skills
     doc.setFontSize(14).setFont("helvetica", 'bold');

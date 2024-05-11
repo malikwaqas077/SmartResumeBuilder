@@ -14,6 +14,14 @@ interface UserData {
   honors: string;
   coursework: string;
   hobbies: string;
+  honorsAndAwards: Honor[];  // Add this new array for honors and awards
+
+}
+interface Honor {
+  name: string;
+  detail: string;
+  year: string;
+  location: string;
 }
 
 interface Skill {
@@ -62,7 +70,9 @@ function App() {
     experience: [{ companyName: '', technologies: '', position: '', duration: '', city: '', softwareName: '', duties: [''] }],
     honors: '',
     coursework: '',
-    hobbies: ''
+    hobbies: '',
+    honorsAndAwards: [{ name: '', detail: '', year: '', location: '' }],  // Initialize with an empty entry
+
   });
 
   const handleNonArrayChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, field: keyof UserData) => {
@@ -104,23 +114,33 @@ function App() {
 
 
   function handleAddSection(section: keyof UserData) {
-    let newEntry: Skill | Education | Experience;
-
-    if (section === 'skills') {
-      newEntry = { name: '', technologies: '' }; // This matches the Skill interface
-    } else if (section === 'education') {
-      newEntry = { institution: '', degree: '', yearCompleted: '', cgpa: '' }; // This matches the Education interface
-    } else if (section === 'experience') {
-      newEntry = { companyName: '', technologies: '', position: '', duration: '', city: '', softwareName: '', duties: [''] }; // This matches the Experience interface
-    } else {
-      throw new Error("Unsupported section type");
+    let newEntry: Skill | Education | Experience | Honor;
+  
+    switch (section) {
+      case 'skills':
+        newEntry = { name: '', technologies: '' };
+        break;
+      case 'education':
+        newEntry = { institution: '', degree: '', yearCompleted: '', cgpa: '' };
+        break;
+      case 'experience':
+        newEntry = { companyName: '', technologies: '', position: '', duration: '', city: '', softwareName: '', duties: [''] };
+        break;
+      case 'honorsAndAwards':
+        newEntry = { name: '', detail: '', year: '', location: '' };  // New case for honors and awards
+        break;
+      default:
+        throw new Error("Unsupported section type");
     }
-
+  
     setUserData(prev => ({
       ...prev,
       [section]: [...prev[section], newEntry]
     }));
   }
+
+  
+  
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -165,6 +185,7 @@ function App() {
           handleAddDuty={handleAddDuty}  // Include handleAddDuty here
         />
 
+        
         {/* Textareas for honors, coursework, and hobbies */}
         <textarea className="border p-2 rounded" placeholder="Honors and Awards" name="honors" value={userData.honors} onChange={(e) => handleNonArrayChange(e, 'honors')} />
         <textarea className="border p-2 rounded" placeholder="Relevant Coursework" name="coursework" value={userData.coursework} onChange={(e) => handleNonArrayChange(e, 'coursework')} />
@@ -176,6 +197,17 @@ function App() {
     </div>
   );
 }
+function isExperience(entry: Skill | Education | Experience): entry is Experience {
+  return (entry as Experience).duties !== undefined;
+}
+function isSkill(entry: Skill | Education | Experience): entry is Skill {
+  return (entry as Skill).technologies !== undefined && !((entry as Experience).duties);
+}
+
+function isEducation(entry: Skill | Education | Experience): entry is Education {
+  return (entry as Education).degree !== undefined && !((entry as Experience).duties);
+}
+
 
 function DynamicSection({ title, section, entries, handleChange, handleAdd, handleAddDuty }: DynamicSectionProps) {
   return (
@@ -183,31 +215,30 @@ function DynamicSection({ title, section, entries, handleChange, handleAdd, hand
       <h2 className="text-lg font-semibold">{title}</h2>
       {entries.map((entry, index) => (
         <div key={index} className="grid grid-cols-2 gap-4 mb-2">
-          {section === "education" ? (
+          {section === "experience" && isExperience(entry) ? (
             <>
-              <input className="border p-2 rounded" type="text" placeholder="Degree" name="degree" value={(entry as Education).degree} onChange={(e) => handleChange(e, index, section)} />
-              <input className="border p-2 rounded" type="text" placeholder="Institution" name="institution" value={(entry as Education).institution} onChange={(e) => handleChange(e, index, section)} />
-              <input className="border p-2 rounded" type="text" placeholder="Year Completed" name="yearCompleted" value={(entry as Education).yearCompleted} onChange={(e) => handleChange(e, index, section)} />
-              <input className="border p-2 rounded" type="text" placeholder="CGPA" name="cgpa" value={(entry as Education).cgpa} onChange={(e) => handleChange(e, index, section)} />
-            </>
-          ) : section === "skills" ? (
-            <>
-              <input className="border p-2 rounded" type="text" placeholder="Title or Name" name="name" value={(entry as Skill).name} onChange={(e) => handleChange(e, index, section)} />
-              <input className="border p-2 rounded" type="text" placeholder="Details or Technologies" name="technologies" value={(entry as Skill).technologies} onChange={(e) => handleChange(e, index, section)} />
-            </>
-          ) : section === "experience" ? (
-            <>
-              <input className="border p-2 rounded" type="text" placeholder="Company Name" name="companyName" value={(entry as Experience).companyName} onChange={(e) => handleChange(e, index, section)} />
-              <input className="border p-2 rounded" type="text" placeholder="Technologies" name="technologies" value={(entry as Experience).technologies} onChange={(e) => handleChange(e, index, section)} />
-              <input className="border p-2 rounded" type="text" placeholder="Position" name="position" value={(entry as Experience).position} onChange={(e) => handleChange(e, index, section)} />
-              <input className="border p-2 rounded" type="text" placeholder="Duration" name="duration" value={(entry as Experience).duration} onChange={(e) => handleChange(e, index, section)} />
-              <input className="border p-2 rounded" type="text" placeholder="City" name="city" value={(entry as Experience).city} onChange={(e) => handleChange(e, index, section)} />
-              <input className="border p-2 rounded" type="text" placeholder="Software Name" name="softwareName" value={(entry as Experience).softwareName} onChange={(e) => handleChange(e, index, section)} />
-
+              <input className="border p-2 rounded" type="text" placeholder="Company Name" name="companyName" value={entry.companyName} onChange={(e) => handleChange(e, index, section)} />
+              <input className="border p-2 rounded" type="text" placeholder="Technologies" name="technologies" value={entry.technologies} onChange={(e) => handleChange(e, index, section)} />
+              <input className="border p-2 rounded" type="text" placeholder="Position" name="position" value={entry.position} onChange={(e) => handleChange(e, index, section)} />
+              <input className="border p-2 rounded" type="text" placeholder="Duration" name="duration" value={entry.duration} onChange={(e) => handleChange(e, index, section)} />
+              <input className="border p-2 rounded" type="text" placeholder="City" name="city" value={entry.city} onChange={(e) => handleChange(e, index, section)} />
+              <input className="border p-2 rounded" type="text" placeholder="Software Name" name="softwareName" value={entry.softwareName} onChange={(e) => handleChange(e, index, section)} />
               {entry.duties.map((duty, dutyIndex) => (
-                <textarea key={dutyIndex} className="border p-2 rounded" placeholder="Duty Detail" name={`duties`} value={duty} onChange={(e) => handleChange(e, index, 'experience', dutyIndex)} />
+                <textarea key={dutyIndex} className="border p-2 rounded" placeholder="Duty Detail" name="duties" value={duty} onChange={(e) => handleChange(e, index, 'experience', dutyIndex)} />
               ))}
-              <button type="button" className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 mt-2" onClick={() => handleAddDuty(index)}>Add Duty</button>
+              <button type="button" className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 mt-2" onClick={() => handleAddDuty!(index)}>Add Duty</button>
+            </>
+          ) : section === "education" && isEducation(entry) ? (
+            <>
+              <input className="border p-2 rounded" type="text" placeholder="Degree" name="degree" value={entry.degree} onChange={(e) => handleChange(e, index, section)} />
+              <input className="border p-2 rounded" type="text" placeholder="Institution" name="institution" value={entry.institution} onChange={(e) => handleChange(e, index, section)} />
+              <input className="border p-2 rounded" type="text" placeholder="Year Completed" name="yearCompleted" value={entry.yearCompleted} onChange={(e) => handleChange(e, index, section)} />
+              <input className="border p-2 rounded" type="text" placeholder="CGPA" name="cgpa" value={entry.cgpa} onChange={(e) => handleChange(e, index, section)} />
+            </>
+          ) : section === "skills" && isSkill(entry) ? (
+            <>
+              <input className="border p-2 rounded" type="text" placeholder="Skill Name" name="name" value={entry.name} onChange={(e) => handleChange(e, index, section)} />
+              <input className="border p-2 rounded" type="text" placeholder="Technologies" name="technologies" value={entry.technologies} onChange={(e) => handleChange(e, index, section)} />
             </>
           ) : null}
         </div>
@@ -216,6 +247,8 @@ function DynamicSection({ title, section, entries, handleChange, handleAdd, hand
     </div>
   );
 }
+
+
 
 
 
