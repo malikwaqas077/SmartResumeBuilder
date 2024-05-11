@@ -13,6 +13,18 @@ interface UserData {
     honors: string;
     coursework: string;
     hobbies: string;
+    honorsAndAwards: Honor[];  // Include this for structured honors and awards
+    personalProjects: Project[];  // Include this for personal projects
+}
+interface Honor {
+    name: string;
+    detail: string;
+    year: string;
+    location: string;
+}
+interface Project {
+    projectName: string;
+    description: string;
 }
 
 export function generatePDF(userData: UserData) {
@@ -21,7 +33,7 @@ export function generatePDF(userData: UserData) {
     let currentY = 20;
 
     // Header with name
-    doc.setFontSize(20).setFont("helvetica", 'bold');
+    doc.setFontSize(24).setFont("helvetica", 'bold');
     doc.text(userData.name, pageWidth / 2, currentY, { align: "center" }); // Centered name title
     currentY += 10;
 
@@ -48,8 +60,10 @@ export function generatePDF(userData: UserData) {
     addIconWithText(icons.linkedin, linkedinUsername, userData.linkedin, startX, currentY);
     startX += doc.getTextWidth(linkedinUsername) + 15;
     addIconWithText(icons.github, githubUsername, userData.github, startX, currentY);
-    currentY += 15;
+    currentY += 8;
 
+    doc.line(10, currentY, pageWidth - 10, currentY);
+    currentY += 10;
     // Calculating column widths and positions
     const leftColumnWidth = pageWidth * 0.66;
     const rightColumnWidth = pageWidth * 0.34;
@@ -75,7 +89,7 @@ export function generatePDF(userData: UserData) {
         }
         currentY += 6;
     });
-    currentY+=2;
+    currentY += 4;
     /// Experience Section in left column
     doc.setFontSize(14).setFont("helvetica", 'bold');
     doc.text("Experience", leftColumnStartX, currentY);
@@ -83,22 +97,25 @@ export function generatePDF(userData: UserData) {
 
     userData.experience.forEach(exp => {
         // Set font size and style for the position with technologies in normal font
+        let positionTechPart = `${exp.position} (${exp.technologies})`;
         doc.setFontSize(10).setFont("helvetica", 'bold');
-        let positionTechPart = `${exp.position} (${exp.technologies})`; // Combine position with technologies
-        doc.text(positionTechPart, leftColumnStartX, currentY); // Print position and technologies
+        doc.text(positionTechPart, leftColumnStartX, currentY);
+        let posTechWidth = doc.getTextWidth(positionTechPart);
+        doc.line(leftColumnStartX, currentY + 2, leftColumnStartX + posTechWidth, currentY + 2);  // Underline
+
         currentY += 6; // Move to the next line
-     
+
         // Set font size and style for the company name in bold
         doc.setFontSize(10).setFont("helvetica", 'normal');
         let companyPart = `${exp.companyName}, ${exp.duration}, ${exp.city}`; // Combine company name, duration, and city
         doc.text(companyPart, leftColumnStartX, currentY); // Print company name, duration, and city
         currentY += 6; // Move to the next line
-    
+
         // Set font size and style for the software name in bold
         doc.setFont("helvetica", 'bold');
         doc.text(`${exp.softwareName}`, leftColumnStartX, currentY); // Software Name
         currentY += 6; // Move to the next line
-    
+
         // Print duties in normal font with text wrapping and indentation for wrapped lines
         doc.setFontSize(10).setFont("helvetica", 'normal');
         exp.duties.forEach(duty => {
@@ -108,7 +125,7 @@ export function generatePDF(userData: UserData) {
             const dutyX = leftColumnStartX + 5; // Starting X for bullet
             const textX = dutyX + bulletWidth; // Starting X for text after bullet
             const maxWidth = leftColumnWidth - textX; // Maximum width for text
-    
+
             // Split text to fit within maxWidth, and handle indent for wrapped lines
             const lines = doc.splitTextToSize(dutyText, maxWidth);
             for (let i = 0; i < lines.length; i++) {
@@ -124,10 +141,10 @@ export function generatePDF(userData: UserData) {
         });
         currentY += 10; // Space before next experience entry
     });
-    
-    
-    
-    
+
+
+
+
 
 
 
@@ -138,16 +155,64 @@ export function generatePDF(userData: UserData) {
     userData.education.forEach(edu => {
         doc.setFontSize(12).setFont("helvetica", 'bold'); // Degree in bold and big
         doc.text(`${edu.degree}`, rightColumnStartX, rightColumnY); // Degree
-        rightColumnY += 6;
+        rightColumnY += 4;
         doc.setFontSize(10).setFont("helvetica", 'bold'); // Institution in less bold
         doc.text(`${edu.institution}`, rightColumnStartX, rightColumnY); // Institution
-        rightColumnY += 6;
+        rightColumnY += 4;
         doc.setFontSize(10).setFont("helvetica", 'normal'); // Year completed and CGPA
         doc.text(`${edu.yearCompleted} | CGPA: ${edu.cgpa}`, rightColumnStartX, rightColumnY); // Year Completed and CGPA
         rightColumnY += 10; // Increase Y position for the next entry
     });
 
-    // Continue with other sections as needed...
+    // Honors and Awards Section in the right column
+    doc.setFontSize(14).setFont("helvetica", 'bold');
+    doc.text("Honors and Awards", rightColumnStartX, rightColumnY);
+    rightColumnY += 6;
+
+    userData.honorsAndAwards.forEach(honor => {
+        doc.setFontSize(10).setFont("helvetica", 'bold'); // Honor name in bold
+        doc.text(honor.name, rightColumnStartX, rightColumnY);
+        rightColumnY += 4;
+
+        doc.setFontSize(10).setFont("helvetica", 'normal'); // Year and location in normal font
+        doc.text(`${honor.year} | ${honor.location}`, rightColumnStartX, rightColumnY);
+        rightColumnY += 6; // Space before the next entry
+
+        doc.setFontSize(10).setFont("helvetica", 'normal'); // Details in normal font
+        const projecthonorsDescLines = doc.splitTextToSize(honor.detail, rightColumnWidth - 10); // Handle text wrapping
+        projecthonorsDescLines.forEach(line => {
+            doc.text(line, rightColumnStartX, rightColumnY,);
+            
+            rightColumnY += 4;
+        });
+        doc.text(honor.detail, rightColumnStartX, rightColumnY);
+        rightColumnY += 6;
+
+        
+    });
+    rightColumnY +=2;
+
+    // Personal Projects Section in the right column
+    doc.setFontSize(14).setFont("helvetica", 'bold');
+    doc.text("Personal Projects", rightColumnStartX, rightColumnY);
+    rightColumnY += 8;
+
+    userData.personalProjects.forEach(project => {
+        doc.setFontSize(10).setFont("helvetica", 'bold'); // Project name in bold
+        doc.text(project.projectName, rightColumnStartX, rightColumnY);
+        rightColumnY += 4;
+
+        doc.setFontSize(10).setFont("helvetica", 'normal'); // Project description in normal font
+        const projectDescLines = doc.splitTextToSize(project.description, rightColumnWidth - 10); // Handle text wrapping
+        projectDescLines.forEach(line => {
+            doc.text(line, rightColumnStartX, rightColumnY);
+            rightColumnY += 4;
+        });
+
+        rightColumnY += 4; // Additional space before the next project
+    });
+
+
 
     doc.save('Resume.pdf');
 }

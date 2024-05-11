@@ -15,7 +15,11 @@ interface UserData {
   coursework: string;
   hobbies: string;
   honorsAndAwards: Honor[];  // Add this new array for honors and awards
-
+  personalProjects: Project[];  // Add this new array for personal projects
+}
+interface Project {
+  projectName: string;
+  description: string;
 }
 interface Honor {
   name: string;
@@ -49,7 +53,7 @@ interface Experience {
 interface DynamicSectionProps {
   title: string;
   section: keyof UserData;
-  entries: (Skill | Education | Experience)[];
+  entries: (Skill | Education | Experience )[];
   handleChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number, section: keyof UserData, subIndex?: number) => void;
   handleAdd: () => void;
   handleAddDuty?: (index: number) => void;  // Make this optional since it's not used by all sections
@@ -72,6 +76,7 @@ function App() {
     coursework: '',
     hobbies: '',
     honorsAndAwards: [{ name: '', detail: '', year: '', location: '' }],  // Initialize with an empty entry
+    personalProjects : [{ projectName: '', description: ''}]
 
   });
 
@@ -114,8 +119,8 @@ function App() {
 
 
   function handleAddSection(section: keyof UserData) {
-    let newEntry: Skill | Education | Experience | Honor;
-  
+    let newEntry: Skill | Education | Experience | Honor | Project;
+    
     switch (section) {
       case 'skills':
         newEntry = { name: '', technologies: '' };
@@ -127,20 +132,25 @@ function App() {
         newEntry = { companyName: '', technologies: '', position: '', duration: '', city: '', softwareName: '', duties: [''] };
         break;
       case 'honorsAndAwards':
-        newEntry = { name: '', detail: '', year: '', location: '' };  // New case for honors and awards
+        newEntry = { name: '', detail: '', year: '', location: '' };
+        break;
+      case 'personalProjects':
+        newEntry = { projectName: '', description: '' };
         break;
       default:
         throw new Error("Unsupported section type");
     }
-  
+    
     setUserData(prev => ({
       ...prev,
       [section]: [...prev[section], newEntry]
     }));
   }
+  
 
-  
-  
+
+
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,8 +194,22 @@ function App() {
           handleAdd={() => handleAddSection('experience')}
           handleAddDuty={handleAddDuty}  // Include handleAddDuty here
         />
+        <DynamicSection
+          title="Honors and Awards"
+          section="honorsAndAwards"
+          entries={userData.honorsAndAwards}
+          handleChange={handleChange}
+          handleAdd={() => handleAddSection('honorsAndAwards')}
+        />
 
-        
+<DynamicSection
+          title="Personal Projects"
+          section="personalProjects"
+          entries={userData.personalProjects}
+          handleChange={handleChange}
+          handleAdd={() => handleAddSection('personalProjects')}
+        />
+
         {/* Textareas for honors, coursework, and hobbies */}
         <textarea className="border p-2 rounded" placeholder="Honors and Awards" name="honors" value={userData.honors} onChange={(e) => handleNonArrayChange(e, 'honors')} />
         <textarea className="border p-2 rounded" placeholder="Relevant Coursework" name="coursework" value={userData.coursework} onChange={(e) => handleNonArrayChange(e, 'coursework')} />
@@ -206,6 +230,13 @@ function isSkill(entry: Skill | Education | Experience): entry is Skill {
 
 function isEducation(entry: Skill | Education | Experience): entry is Education {
   return (entry as Education).degree !== undefined && !((entry as Experience).duties);
+}
+function isHonor(entry: Skill | Education | Experience | Honor): entry is Honor {
+  return (entry as Honor).detail !== undefined;
+}
+
+function isProject(entry: Skill | Education | Experience | Honor | Project): entry is Project {
+  return (entry as Project).projectName !== undefined;
 }
 
 
@@ -239,6 +270,31 @@ function DynamicSection({ title, section, entries, handleChange, handleAdd, hand
             <>
               <input className="border p-2 rounded" type="text" placeholder="Skill Name" name="name" value={entry.name} onChange={(e) => handleChange(e, index, section)} />
               <input className="border p-2 rounded" type="text" placeholder="Technologies" name="technologies" value={entry.technologies} onChange={(e) => handleChange(e, index, section)} />
+            </>
+          ) : isHonor(entry) && section === "honorsAndAwards" ? (
+            <>
+              <input className="border p-2 rounded" type="text" placeholder="Award Name" name="name" value={entry.name} onChange={(e) => handleChange(e, index, section)} />
+              <input className="border p-2 rounded" type="text" placeholder="Detail" name="detail" value={entry.detail} onChange={(e) => handleChange(e, index, section)} />
+              <input className="border p-2 rounded" type="text" placeholder="Year" name="year" value={entry.year} onChange={(e) => handleChange(e, index, section)} />
+              <input className="border p-2 rounded" type="text" placeholder="Location" name="location" value={entry.location} onChange={(e) => handleChange(e, index, section)} />
+            </>
+          ) : isProject(entry) && section === "personalProjects" ? (
+            <>
+              <input
+                className="border p-2 rounded"
+                type="text"
+                placeholder="Project Name"
+                name="projectName"
+                value={entry.projectName}
+                onChange={(e) => handleChange(e, index, section)}
+              />
+              <textarea
+                className="border p-2 rounded"
+                placeholder="Project Description"
+                name="description"
+                value={entry.description}
+                onChange={(e) => handleChange(e, index, section)}
+              />
             </>
           ) : null}
         </div>
