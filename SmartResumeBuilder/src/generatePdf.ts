@@ -47,11 +47,19 @@ export function generatePDF(userData: UserData) {
         doc.setFontSize(10).setFont("helvetica", 'normal');
         doc.textWithLink(text, x + iconSize + 2, y + iconSize / 2 + 1, { url });
     };
-
+    function getLinkedInUsername(linkedinUrl: string): string {
+        // Ensure the URL doesn't end with a slash for consistent processing
+        const trimmedUrl = linkedinUrl.endsWith('/') ? linkedinUrl.slice(0, -1) : linkedinUrl;
+        
+        // Extract the username using the last '/' as a reference
+        return trimmedUrl.substring(trimmedUrl.lastIndexOf('/') + 1);
+      }
+      
     // Extracting the user names from the URLs
-    const linkedinUsername = userData.linkedin.substring(userData.linkedin.lastIndexOf('/') + 1);
+    // Assuming userData.linkedin is already populated with the LinkedIn URL
+    const linkedinUsername = getLinkedInUsername(userData.linkedin);
     const githubUsername = userData.github.substring(userData.github.lastIndexOf('/') + 1);
-
+    
     // Place each icon with text
     addIconWithText(icons.email, userData.email, `mailto:${userData.email}`, startX, currentY);
     startX += doc.getTextWidth(userData.email) + 15;

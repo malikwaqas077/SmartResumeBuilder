@@ -161,7 +161,7 @@ function App() {
   return (
     <div className="App">
       <h1 className="text-xl font-bold text-center my-4">Welcome to Smart CV Builder</h1>
-      <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-6">
+      <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-6 min-w-[800px]">
         {/* Inputs for name, email, phone, LinkedIn, and GitHub */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input className="border p-2 rounded" type="text" placeholder="Name" name="name" value={userData.name} onChange={(e) => handleNonArrayChange(e, 'name')} />
@@ -212,10 +212,7 @@ function App() {
         />
 
         {/* Textareas for honors, coursework, and hobbies */}
-        <textarea className="border p-2 rounded" placeholder="Honors and Awards" name="honors" value={userData.honors} onChange={(e) => handleNonArrayChange(e, 'honors')} />
-        <textarea className="border p-2 rounded" placeholder="Relevant Coursework" name="coursework" value={userData.coursework} onChange={(e) => handleNonArrayChange(e, 'coursework')} />
-        <textarea className="border p-2 rounded" placeholder="Hobbies" name="hobbies" value={userData.hobbies} onChange={(e) => handleNonArrayChange(e, 'hobbies')} />
-
+        
         {/* Submit button */}
         <button type="submit" className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">Generate PDF</button>
       </form>
@@ -246,10 +243,10 @@ function isProject(entry: Skill | Education | Experience | Honor | Project): ent
 
 function DynamicSection({ title, section, entries, handleChange, handleAdd, handleAddDuty }: DynamicSectionProps) {
   return (
-    <div>
-      <h2 className="text-lg font-semibold">{title}</h2>
+    <div className="bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+      <h2 className="text-lg font-semibold mb-4">{title}</h2>
       {entries.map((entry, index) => (
-        <div key={index} className="grid grid-cols-2 gap-4 mb-2">
+        <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           {section === "experience" && isExperience(entry) ? (
             <>
               <input className="border p-2 rounded" type="text" placeholder="Company Name" name="companyName" value={entry.companyName} onChange={(e) => handleChange(e, index, section)} />
@@ -259,9 +256,9 @@ function DynamicSection({ title, section, entries, handleChange, handleAdd, hand
               <input className="border p-2 rounded" type="text" placeholder="City" name="city" value={entry.city} onChange={(e) => handleChange(e, index, section)} />
               <input className="border p-2 rounded" type="text" placeholder="Software Name" name="softwareName" value={entry.softwareName} onChange={(e) => handleChange(e, index, section)} />
               {entry.duties.map((duty, dutyIndex) => (
-                <textarea key={dutyIndex} className="border p-2 rounded" placeholder="Duty Detail" name="duties" value={duty} onChange={(e) => handleChange(e, index, 'experience', dutyIndex)} />
+                <textarea key={dutyIndex} className="border p-2 rounded col-span-2" placeholder="Duty Detail" name="duties" value={duty} onChange={(e) => handleChange(e, index, 'experience', dutyIndex)} />
               ))}
-              <button type="button" className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 mt-2" onClick={() => handleAddDuty!(index)}>Add Duty</button>
+              <button type="button" className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 mt-2 col-span-2" onClick={() => handleAddDuty!(index)}>Add Duty</button>
             </>
           ) : section === "education" && isEducation(entry) ? (
             <>
@@ -275,14 +272,15 @@ function DynamicSection({ title, section, entries, handleChange, handleAdd, hand
               <input className="border p-2 rounded" type="text" placeholder="Skill Name" name="name" value={entry.name} onChange={(e) => handleChange(e, index, section)} />
               <input className="border p-2 rounded" type="text" placeholder="Technologies" name="technologies" value={entry.technologies} onChange={(e) => handleChange(e, index, section)} />
             </>
-          ) : isHonor(entry) && section === "honorsAndAwards" ? (
+          ) : section === "honorsAndAwards" && isHonor(entry) ? (
             <>
               <input className="border p-2 rounded" type="text" placeholder="Award Name" name="name" value={entry.name} onChange={(e) => handleChange(e, index, section)} />
               <input className="border p-2 rounded" type="text" placeholder="Detail" name="detail" value={entry.detail} onChange={(e) => handleChange(e, index, section)} />
               <input className="border p-2 rounded" type="text" placeholder="Year" name="year" value={entry.year} onChange={(e) => handleChange(e, index, section)} />
               <input className="border p-2 rounded" type="text" placeholder="Location" name="location" value={entry.location} onChange={(e) => handleChange(e, index, section)} />
+
             </>
-          ) : isProject(entry) && section === "personalProjects" ? (
+          ) : section === "personalProjects" && isProject(entry) ? (
             <>
               <input
                 className="border p-2 rounded"
@@ -293,7 +291,7 @@ function DynamicSection({ title, section, entries, handleChange, handleAdd, hand
                 onChange={(e) => handleChange(e, index, section)}
               />
               <textarea
-                className="border p-2 rounded"
+                className="border p-2 rounded col-span-2"
                 placeholder="Project Description"
                 name="description"
                 value={entry.description}
@@ -307,6 +305,7 @@ function DynamicSection({ title, section, entries, handleChange, handleAdd, hand
     </div>
   );
 }
+
 
 
 

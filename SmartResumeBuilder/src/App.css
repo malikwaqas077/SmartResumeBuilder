@@ -40,3 +40,27 @@
 .read-the-docs {
   color: #888;
 }
+.section-container {
+  border: 2px solid #e2e8f0; /* Light gray border */
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  background-color: #f7fafc; /* Light background for each section */
+}
+
+.section-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Two columns */
+  gap: 16px;
+  align-items: start;
+}
+
+.input-full-width {
+  grid-column: 1 / -1; /* Makes element span full width in a two-column layout */
+}
+
+@media (max-width: 768px) {
+  .section-grid {
+    grid-template-columns: 1fr; /* Stack columns on smaller screens */
+  }
+}
