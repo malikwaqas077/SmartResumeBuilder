@@ -193,8 +193,8 @@ export function generatePDF(userData: UserData) {
             
             rightColumnY += 4;
         });
-        doc.text(honor.detail, rightColumnStartX, rightColumnY);
-        rightColumnY += 6;
+        // doc.text(honor.detail, rightColumnStartX, rightColumnY);
+        // rightColumnY += 6;
 
         
     });
