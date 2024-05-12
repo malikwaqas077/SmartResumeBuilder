@@ -53,11 +53,12 @@ interface Experience {
 interface DynamicSectionProps {
   title: string;
   section: keyof UserData;
-  entries: (Skill | Education | Experience )[];
+  entries: (Skill | Education | Experience | Honor | Project)[];
   handleChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number, section: keyof UserData, subIndex?: number) => void;
   handleAdd: () => void;
   handleAddDuty?: (index: number) => void;  // Make this optional since it's not used by all sections
 }
+
 
 
 
@@ -197,7 +198,7 @@ function App() {
         <DynamicSection
           title="Honors and Awards"
           section="honorsAndAwards"
-          entries={userData.honorsAndAwards}
+          entries={userData.honorsAndAwards as (Skill | Education | Experience | Honor | Project)[]}
           handleChange={handleChange}
           handleAdd={() => handleAddSection('honorsAndAwards')}
         />
@@ -205,7 +206,7 @@ function App() {
 <DynamicSection
           title="Personal Projects"
           section="personalProjects"
-          entries={userData.personalProjects}
+          entries={userData.personalProjects as (Skill | Education | Experience | Honor | Project)[]}
           handleChange={handleChange}
           handleAdd={() => handleAddSection('personalProjects')}
         />
@@ -221,23 +222,26 @@ function App() {
     </div>
   );
 }
-function isExperience(entry: Skill | Education | Experience): entry is Experience {
-  return (entry as Experience).duties !== undefined;
-}
-function isSkill(entry: Skill | Education | Experience): entry is Skill {
-  return (entry as Skill).technologies !== undefined && !((entry as Experience).duties);
+function isExperience(entry: Skill | Education | Experience | Honor | Project): entry is Experience {
+  return (entry as Experience).duties !== undefined && (entry as Experience).companyName !== undefined;
 }
 
-function isEducation(entry: Skill | Education | Experience): entry is Education {
-  return (entry as Education).degree !== undefined && !((entry as Experience).duties);
+function isSkill(entry: Skill | Education | Experience | Honor | Project): entry is Skill {
+  return (entry as Skill).technologies !== undefined && (entry as Skill).name !== undefined;
 }
-function isHonor(entry: Skill | Education | Experience | Honor): entry is Honor {
-  return (entry as Honor).detail !== undefined;
+
+function isEducation(entry: Skill | Education | Experience | Honor | Project): entry is Education {
+  return (entry as Education).degree !== undefined && (entry as Education).institution !== undefined;
+}
+
+function isHonor(entry: Skill | Education | Experience | Honor | Project): entry is Honor {
+  return (entry as Honor).detail !== undefined && (entry as Honor).name !== undefined;
 }
 
 function isProject(entry: Skill | Education | Experience | Honor | Project): entry is Project {
-  return (entry as Project).projectName !== undefined;
+  return (entry as Project).projectName !== undefined && (entry as Project).description !== undefined;
 }
+
 
 
 function DynamicSection({ title, section, entries, handleChange, handleAdd, handleAddDuty }: DynamicSectionProps) {

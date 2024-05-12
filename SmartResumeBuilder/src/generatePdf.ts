@@ -180,7 +180,7 @@ export function generatePDF(userData: UserData) {
 
         doc.setFontSize(10).setFont("helvetica", 'normal'); // Details in normal font
         const projecthonorsDescLines = doc.splitTextToSize(honor.detail, rightColumnWidth - 10); // Handle text wrapping
-        projecthonorsDescLines.forEach(line => {
+        projecthonorsDescLines.forEach((line : string) => {
             doc.text(line, rightColumnStartX, rightColumnY,);
             
             rightColumnY += 4;
@@ -204,7 +204,7 @@ export function generatePDF(userData: UserData) {
 
         doc.setFontSize(10).setFont("helvetica", 'normal'); // Project description in normal font
         const projectDescLines = doc.splitTextToSize(project.description, rightColumnWidth - 10); // Handle text wrapping
-        projectDescLines.forEach(line => {
+        projectDescLines.forEach((line : string) => {
             doc.text(line, rightColumnStartX, rightColumnY);
             rightColumnY += 4;
         });
