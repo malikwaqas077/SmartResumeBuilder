@@ -10,11 +10,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "body-parser": "^1.20.2",
     "classnames": "^2.5.1",
+    "cors": "^2.8.5",
     "docxtemplater": "^3.47.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
     "file-saver": "^2.0.5",
     "fs": "^0.0.1-security",
     "jspdf": "^2.5.1",
+    "mongoose": "^8.4.0",
     "pizzip": "^3.1.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
