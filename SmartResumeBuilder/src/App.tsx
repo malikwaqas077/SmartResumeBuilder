@@ -1,8 +1,10 @@
-import React, { useState, ChangeEvent } from 'react';
+import React, { useState, useEffect, ChangeEvent } from 'react';
+import axios from 'axios';
 import './App.css';  // Ensure Tailwind CSS is correctly imported
 import { generatePDF } from './generatePdf';
 
 interface UserData {
+  _id?: string;
   name: string;
   email: string;
   phone: string;
@@ -14,23 +16,28 @@ interface UserData {
   honors: string;
   coursework: string;
   hobbies: string;
-  honorsAndAwards: Honor[];  // Add this new array for honors and awards
-  personalProjects: Project[];  // Add this new array for personal projects
+  honorsAndAwards: Honor[];
+  personalProjects: Project[];
 }
+
 interface Project {
   projectName: string;
   description: string;
+  _id?: string;
 }
+
 interface Honor {
   name: string;
   detail: string;
   year: string;
   location: string;
+  _id?: string;
 }
 
 interface Skill {
   name: string;
   technologies: string;
+  _id?: string;
 }
 
 interface Education {
@@ -38,6 +45,7 @@ interface Education {
   degree: string;
   yearCompleted: string;
   cgpa: string;
+  _id?: string;
 }
 
 interface Experience {
@@ -48,6 +56,7 @@ interface Experience {
   city: string;
   softwareName: string;
   duties: string[];
+  _id?: string;
 }
 
 interface DynamicSectionProps {
@@ -56,12 +65,8 @@ interface DynamicSectionProps {
   entries: (Skill | Education | Experience | Honor | Project)[];
   handleChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number, section: keyof UserData, subIndex?: number) => void;
   handleAdd: () => void;
-  handleAddDuty?: (index: number) => void;  // Make this optional since it's not used by all sections
+  handleAddDuty?: (index: number) => void;
 }
-
-
-
-
 
 function App() {
   const [userData, setUserData] = useState<UserData>({
@@ -76,41 +81,65 @@ function App() {
     honors: '',
     coursework: '',
     hobbies: '',
-    honorsAndAwards: [{ name: '', detail: '', year: '', location: '' }],  // Initialize with an empty entry
-    personalProjects : [{ projectName: '', description: ''}]
-
+    honorsAndAwards: [{ name: '', detail: '', year: '', location: '' }],
+    personalProjects: [{ projectName: '', description: '' }]
   });
+
+  const [cvList, setCvList] = useState<UserData[]>([]);
+
+  useEffect(() => {
+    fetchCvList();
+  }, []);
+
+  const fetchCvList = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/cvs');
+      console.log('CV List Response:', response.data);
+      setCvList(response.data);
+    } catch (error) {
+      console.error('Error fetching CV list:', error);
+    }
+  };
 
   const handleNonArrayChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, field: keyof UserData) => {
     const { value } = e.target;
     setUserData({ ...userData, [field]: value });
   };
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number, section: keyof UserData, subIndex?: number) => {
+
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    index: number,
+    section: keyof UserData,
+    subIndex?: number
+  ) => {
     const { name, value } = e.target;
-
-    const updatedSection = [...userData[section]] as Skill[] | Education[] | Experience[];
-
-    if (section === 'experience') {
-      // Handle nested duties within the experience entries
-      if (name === 'duties' && subIndex !== undefined) {
-        const updatedDuties = [...(updatedSection[index] as Experience).duties];
-        updatedDuties[subIndex] = value;
-        (updatedSection[index] as Experience).duties = updatedDuties;
+  
+    const sectionData = userData[section];
+  
+    if (Array.isArray(sectionData)) {
+      const updatedSection = [...sectionData] as (Skill | Education | Experience | Honor | Project)[];
+  
+      if (section === 'experience') {
+        if (name === 'duties' && subIndex !== undefined) {
+          const updatedDuties = [...(updatedSection[index] as Experience).duties];
+          updatedDuties[subIndex] = value;
+          (updatedSection[index] as Experience).duties = updatedDuties;
+        } else {
+          (updatedSection[index] as any)[name] = value;
+        }
       } else {
         (updatedSection[index] as any)[name] = value;
       }
-    } else {
-      // For non-experience sections, or non-duty fields in experience
-      (updatedSection[index] as any)[name] = value;
+  
+      setUserData({ ...userData, [section]: updatedSection });
     }
-
-    setUserData({ ...userData, [section]: updatedSection });
   };
-
+  
+  
 
   function handleAddDuty(index: number) {
     setUserData(prevUserData => {
-      const newDuties = [...prevUserData.experience[index].duties, '']; // Add a new empty duty
+      const newDuties = [...prevUserData.experience[index].duties, ''];
       const updatedExperience = { ...prevUserData.experience[index], duties: newDuties };
       const updatedExperiences = [...prevUserData.experience];
       updatedExperiences[index] = updatedExperience;
@@ -118,10 +147,9 @@ function App() {
     });
   }
 
-
   function handleAddSection(section: keyof UserData) {
     let newEntry: Skill | Education | Experience | Honor | Project;
-    
+
     switch (section) {
       case 'skills':
         newEntry = { name: '', technologies: '' };
@@ -141,84 +169,146 @@ function App() {
       default:
         throw new Error("Unsupported section type");
     }
-    
+
     setUserData(prev => ({
       ...prev,
       [section]: [...prev[section], newEntry]
     }));
   }
-  
 
-
-
-
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    generatePDF(userData);
+  const handleCvClick = async (id: string) => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/cvs/${id}`);
+      const fetchedCv: UserData = response.data;
+      setUserData({
+        ...fetchedCv,
+        skills: fetchedCv.skills || [{ name: '', technologies: '' }],
+        education: fetchedCv.education || [{ institution: '', degree: '', yearCompleted: '', cgpa: '' }],
+        experience: fetchedCv.experience || [{ companyName: '', technologies: '', position: '', duration: '', city: '', softwareName: '', duties: [''] }],
+        honorsAndAwards: fetchedCv.honorsAndAwards || [{ name: '', detail: '', year: '', location: '' }],
+        personalProjects: fetchedCv.personalProjects || [{ projectName: '', description: '' }],
+        honors: fetchedCv.honors || '',
+        coursework: fetchedCv.coursework || '',
+        hobbies: fetchedCv.hobbies || ''
+      });
+    } catch (error) {
+      console.error('Error fetching CV:', error);
+    }
   };
+
+  const sanitizeData = (data: any): any => {
+    if (Array.isArray(data)) {
+      return data.map(item => sanitizeData(item));
+    } else if (typeof data === 'object' && data !== null) {
+      const { _id, __v, ...rest } = data;
+      const sanitizedObject: any = {};
+      for (const key in rest) {
+        sanitizedObject[key] = sanitizeData(rest[key]);
+      }
+      return sanitizedObject;
+    } else {
+      return data;
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+  
+    const sanitizedUserData: UserData = sanitizeData(userData);
+  
+    try {
+      // Log the sanitized data being sent to the server
+      console.log("Sending sanitized data to server:", sanitizedUserData);
+  
+      // Save the CV to the database
+      await axios.post('http://localhost:5000/api/cvs', sanitizedUserData);
+      console.log('CV saved to database successfully');
+      
+      // Fetch the updated CV list
+      fetchCvList();
+  
+      // Generate the PDF
+      generatePDF(userData);
+    } catch (error) {
+      // Type guard to check if error is an AxiosError
+      if (axios.isAxiosError(error)) {
+        console.error('Error saving CV:', error.response?.data || error.message);
+      } else {
+        console.error('Error saving CV:', error);
+      }
+    }
+  };
+  
 
   return (
     <div className="App">
       <h1 className="text-xl font-bold text-center my-4">Welcome to Smart CV Builder</h1>
-      <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-6 min-w-[800px]">
-        {/* Inputs for name, email, phone, LinkedIn, and GitHub */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input className="border p-2 rounded" type="text" placeholder="Name" name="name" value={userData.name} onChange={(e) => handleNonArrayChange(e, 'name')} />
-          <input className="border p-2 rounded" type="email" placeholder="Email" name="email" value={userData.email} onChange={(e) => handleNonArrayChange(e, 'email')} />
-          <input className="border p-2 rounded" type="text" placeholder="Phone" name="phone" value={userData.phone} onChange={(e) => handleNonArrayChange(e, 'phone')} />
-          <input className="border p-2 rounded" type="text" placeholder="LinkedIn Profile" name="linkedin" value={userData.linkedin} onChange={(e) => handleNonArrayChange(e, 'linkedin')} />
-          <input className="border p-2 rounded" type="text" placeholder="GitHub Profile" name="github" value={userData.github} onChange={(e) => handleNonArrayChange(e, 'github')} />
-
+      <div className="flex">
+        <div className="w-1/4 p-4">
+          <h2 className="text-lg font-semibold mb-4">Saved CVs</h2>
+          <ul className="list-disc pl-5">
+            {Array.isArray(cvList) && cvList.map(cv => (
+              <li key={cv._id} className="cursor-pointer text-blue-500 hover:underline" onClick={() => handleCvClick(cv._id!)}>
+                {cv.name}
+              </li>
+            ))}
+          </ul>
         </div>
+        <div className="w-3/4 p-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input className="border p-2 rounded" type="text" placeholder="Name" name="name" value={userData.name || ''} onChange={(e) => handleNonArrayChange(e, 'name')} />
+              <input className="border p-2 rounded" type="email" placeholder="Email" name="email" value={userData.email || ''} onChange={(e) => handleNonArrayChange(e, 'email')} />
+              <input className="border p-2 rounded" type="text" placeholder="Phone" name="phone" value={userData.phone || ''} onChange={(e) => handleNonArrayChange(e, 'phone')} />
+              <input className="border p-2 rounded" type="text" placeholder="LinkedIn Profile" name="linkedin" value={userData.linkedin || ''} onChange={(e) => handleNonArrayChange(e, 'linkedin')} />
+              <input className="border p-2 rounded" type="text" placeholder="GitHub Profile" name="github" value={userData.github || ''} onChange={(e) => handleNonArrayChange(e, 'github')} />
+            </div>
 
-        {/* Dynamic sections for skills, education, and experience */}
-        <DynamicSection
-          title="Skills and Technologies"
-          section="skills"
-          entries={userData.skills}
-          handleChange={handleChange}
-          handleAdd={() => handleAddSection('skills')}
-        />
-        <DynamicSection
-          title="Education"
-          section="education"
-          entries={userData.education}
-          handleChange={handleChange}
-          handleAdd={() => handleAddSection('education')}
-        />
-        <DynamicSection
-          title="Experience"
-          section="experience"
-          entries={userData.experience}
-          handleChange={handleChange}
-          handleAdd={() => handleAddSection('experience')}
-          handleAddDuty={handleAddDuty}  // Include handleAddDuty here
-        />
-        <DynamicSection
-          title="Honors and Awards"
-          section="honorsAndAwards"
-          entries={userData.honorsAndAwards as (Skill | Education | Experience | Honor | Project)[]}
-          handleChange={handleChange}
-          handleAdd={() => handleAddSection('honorsAndAwards')}
-        />
+            <DynamicSection
+              title="Skills and Technologies"
+              section="skills"
+              entries={userData.skills}
+              handleChange={handleChange}
+              handleAdd={() => handleAddSection('skills')}
+            />
+            <DynamicSection
+              title="Education"
+              section="education"
+              entries={userData.education}
+              handleChange={handleChange}
+              handleAdd={() => handleAddSection('education')}
+            />
+            <DynamicSection
+              title="Experience"
+              section="experience"
+              entries={userData.experience}
+              handleChange={handleChange}
+              handleAdd={() => handleAddSection('experience')}
+              handleAddDuty={handleAddDuty}
+            />
+            <DynamicSection
+              title="Honors and Awards"
+              section="honorsAndAwards"
+              entries={userData.honorsAndAwards as (Skill | Education | Experience | Honor | Project)[]}
+              handleChange={handleChange}
+              handleAdd={() => handleAddSection('honorsAndAwards')}
+            />
+            <DynamicSection
+              title="Personal Projects"
+              section="personalProjects"
+              entries={userData.personalProjects as (Skill | Education | Experience | Honor | Project)[]}
+              handleChange={handleChange}
+              handleAdd={() => handleAddSection('personalProjects')}
+            />
 
-<DynamicSection
-          title="Personal Projects"
-          section="personalProjects"
-          entries={userData.personalProjects as (Skill | Education | Experience | Honor | Project)[]}
-          handleChange={handleChange}
-          handleAdd={() => handleAddSection('personalProjects')}
-        />
-
-        {/* Textareas for honors, coursework, and hobbies */}
-        
-        {/* Submit button */}
-        <button type="submit" className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">Generate PDF</button>
-      </form>
+            <button type="submit" className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">Generate PDF</button>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }
+
 function isExperience(entry: Skill | Education | Experience | Honor | Project): entry is Experience {
   return (entry as Experience).duties !== undefined && (entry as Experience).companyName !== undefined;
 }
@@ -239,9 +329,10 @@ function isProject(entry: Skill | Education | Experience | Honor | Project): ent
   return (entry as Project).projectName !== undefined && (entry as Project).description !== undefined;
 }
 
-
-
 function DynamicSection({ title, section, entries, handleChange, handleAdd, handleAddDuty }: DynamicSectionProps) {
+  // Ensure entries is always an array
+  entries = entries || [];
+
   return (
     <div className="bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
       <h2 className="text-lg font-semibold mb-4">{title}</h2>
@@ -278,7 +369,6 @@ function DynamicSection({ title, section, entries, handleChange, handleAdd, hand
               <input className="border p-2 rounded" type="text" placeholder="Detail" name="detail" value={entry.detail} onChange={(e) => handleChange(e, index, section)} />
               <input className="border p-2 rounded" type="text" placeholder="Year" name="year" value={entry.year} onChange={(e) => handleChange(e, index, section)} />
               <input className="border p-2 rounded" type="text" placeholder="Location" name="location" value={entry.location} onChange={(e) => handleChange(e, index, section)} />
-
             </>
           ) : section === "personalProjects" && isProject(entry) ? (
             <>
@@ -305,10 +395,5 @@ function DynamicSection({ title, section, entries, handleChange, handleAdd, hand
     </div>
   );
 }
-
-
-
-
-
 
 export default App;

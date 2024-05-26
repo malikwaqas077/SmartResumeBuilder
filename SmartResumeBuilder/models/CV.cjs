@@ -1,28 +1,54 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
 
-const CVSchema = new Schema({
+const skillSchema = new mongoose.Schema({
+  name: String,
+  technologies: String,
+});
+
+const educationSchema = new mongoose.Schema({
+  institution: String,
+  degree: String,
+  yearCompleted: String,
+  cgpa: String,
+});
+
+const experienceSchema = new mongoose.Schema({
+  companyName: String,
+  technologies: String,
+  position: String,
+  duration: String,
+  city: String,
+  softwareName: String,
+  duties: [String],
+});
+
+const honorSchema = new mongoose.Schema({
+  name: String,
+  detail: String,
+  year: String,
+  location: String,
+});
+
+const projectSchema = new mongoose.Schema({
+  projectName: String,
+  description: String,
+});
+
+const userSchema = new mongoose.Schema({
   name: String,
   email: String,
   phone: String,
   linkedin: String,
   github: String,
-  skills: [{ name: String, technologies: String }],
-  education: [{ institution: String, degree: String, yearCompleted: String, cgpa: String }],
-  experience: [{
-    companyName: String,
-    technologies: String,
-    position: String,
-    duration: String,
-    city: String,
-    softwareName: String,
-    duties: [String]
-  }],
+  skills: [skillSchema],
+  education: [educationSchema],
+  experience: [experienceSchema],
   honors: String,
   coursework: String,
   hobbies: String,
-  honorsAndAwards: [{ name: String, detail: String, year: String, location: String }],
-  personalProjects: [{ projectName: String, description: String }]
+  honorsAndAwards: [honorSchema],
+  personalProjects: [projectSchema],
 });
 
-module.exports = mongoose.model('CV', CVSchema);
+const User = mongoose.model('User', userSchema);
+module.exports = User;

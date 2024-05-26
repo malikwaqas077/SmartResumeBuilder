@@ -34,6 +34,16 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// List all CVs
+router.get('/', async (req, res) => {
+  try {
+    const cvs = await CV.find();
+    res.status(200).json(cvs);
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching CVs' });
+  }
+});
+
 // Delete a CV by ID
 router.delete('/:id', async (req, res) => {
   try {

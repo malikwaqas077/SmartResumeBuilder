@@ -27,7 +27,7 @@ interface Project {
     description: string;
 }
 
-export function generatePDF(userData: UserData) {
+export async function generatePDF(userData: UserData) {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     let currentY = 20;
@@ -53,7 +53,7 @@ export function generatePDF(userData: UserData) {
         
         // Extract the username using the last '/' as a reference
         return trimmedUrl.substring(trimmedUrl.lastIndexOf('/') + 1);
-      }
+    }
       
     // Extracting the user names from the URLs
     // Assuming userData.linkedin is already populated with the LinkedIn URL
@@ -150,12 +150,6 @@ export function generatePDF(userData: UserData) {
         currentY += 10; // Space before next experience entry
     });
 
-
-
-
-
-
-
     // Education Section in right column, starting at the same Y as skills
     doc.setFontSize(14).setFont("helvetica", 'bold');
     doc.text("Education", rightColumnStartX, rightColumnY);
@@ -167,7 +161,7 @@ export function generatePDF(userData: UserData) {
         doc.setFontSize(10).setFont("helvetica", 'bold'); // Institution in less bold
         doc.text(`${edu.institution}`, rightColumnStartX, rightColumnY); // Institution
         rightColumnY += 4;
-        doc.setFontSize(10).setFont("helvetica", 'normal'); // Year completed and CGPA
+        doc.setFont("helvetica", 'normal'); // Year completed and CGPA
         doc.text(`${edu.yearCompleted} | CGPA: ${edu.cgpa}`, rightColumnStartX, rightColumnY); // Year Completed and CGPA
         rightColumnY += 10; // Increase Y position for the next entry
     });
@@ -182,23 +176,18 @@ export function generatePDF(userData: UserData) {
         doc.text(honor.name, rightColumnStartX, rightColumnY);
         rightColumnY += 4;
 
-        doc.setFontSize(10).setFont("helvetica", 'normal'); // Year and location in normal font
+        doc.setFont("helvetica", 'normal'); // Year and location in normal font
         doc.text(`${honor.year} | ${honor.location}`, rightColumnStartX, rightColumnY);
         rightColumnY += 6; // Space before the next entry
 
-        doc.setFontSize(10).setFont("helvetica", 'normal'); // Details in normal font
+        doc.setFont("helvetica", 'normal'); // Details in normal font
         const projecthonorsDescLines = doc.splitTextToSize(honor.detail, rightColumnWidth - 10); // Handle text wrapping
-        projecthonorsDescLines.forEach((line : string) => {
-            doc.text(line, rightColumnStartX, rightColumnY,);
-            
+        projecthonorsDescLines.forEach((line: string) => {
+            doc.text(line, rightColumnStartX, rightColumnY);
             rightColumnY += 4;
         });
-        // doc.text(honor.detail, rightColumnStartX, rightColumnY);
-        // rightColumnY += 6;
-
-        
     });
-    rightColumnY +=2;
+    rightColumnY += 2;
 
     // Personal Projects Section in the right column
     doc.setFontSize(14).setFont("helvetica", 'bold');
@@ -212,7 +201,7 @@ export function generatePDF(userData: UserData) {
 
         doc.setFontSize(10).setFont("helvetica", 'normal'); // Project description in normal font
         const projectDescLines = doc.splitTextToSize(project.description, rightColumnWidth - 10); // Handle text wrapping
-        projectDescLines.forEach((line : string) => {
+        projectDescLines.forEach((line: string) => {
             doc.text(line, rightColumnStartX, rightColumnY);
             rightColumnY += 4;
         });
@@ -220,7 +209,8 @@ export function generatePDF(userData: UserData) {
         rightColumnY += 4; // Additional space before the next project
     });
 
-
-
+    // Save the PDF
     doc.save('Resume.pdf');
+
+    
 }
