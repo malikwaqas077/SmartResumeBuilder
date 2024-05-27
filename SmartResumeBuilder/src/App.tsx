@@ -2,6 +2,7 @@ import React, { useState, useEffect, ChangeEvent } from 'react';
 import axios from 'axios';
 import './App.css';  // Ensure Tailwind CSS is correctly imported
 import { generatePDF } from './generatePdf';
+import CvList from './CvList';
 
 interface UserData {
   _id?: string;
@@ -196,6 +197,15 @@ function App() {
     }
   };
 
+  const handleDeleteClick = async (id: string) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/cvs/${id}`);
+      setCvList(cvList.filter(cv => cv._id !== id));
+    } catch (error) {
+      console.error('Error deleting CV:', error);
+    }
+  };
+
   const sanitizeData = (data: any): any => {
     if (Array.isArray(data)) {
       return data.map(item => sanitizeData(item));
@@ -242,21 +252,12 @@ function App() {
 
   return (
     <div className="App">
-      <h1 className="text-xl font-bold text-center my-4">Welcome to Smart CV Builder</h1>
+      <h1 className="text-xl font-bold text-center my-2">Welcome to Smart CV Builder</h1>  {/* Reduced margin here */}
       <div className="flex">
-        <div className="w-1/4 p-4">
-          <h2 className="text-lg font-semibold mb-4">Saved CVs</h2>
-          <ul className="list-disc pl-5">
-            {Array.isArray(cvList) && cvList.map(cv => (
-              <li key={cv._id} className="cursor-pointer text-blue-500 hover:underline" onClick={() => handleCvClick(cv._id!)}>
-                {cv.name}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="w-3/4 p-4">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <CvList cvList={cvList} handleCvClick={handleCvClick} handleDeleteClick={handleDeleteClick} />
+        <div className="w-1/2 p-2">  {/* Reduced padding here */}
+          <form onSubmit={handleSubmit} className="space-y-4">  {/* Reduced spacing here */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">  {/* Reduced gap here */}
               <input className="border p-2 rounded" type="text" placeholder="Name" name="name" value={userData.name || ''} onChange={(e) => handleNonArrayChange(e, 'name')} />
               <input className="border p-2 rounded" type="email" placeholder="Email" name="email" value={userData.email || ''} onChange={(e) => handleNonArrayChange(e, 'email')} />
               <input className="border p-2 rounded" type="text" placeholder="Phone" name="phone" value={userData.phone || ''} onChange={(e) => handleNonArrayChange(e, 'phone')} />
@@ -303,6 +304,10 @@ function App() {
 
             <button type="submit" className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">Generate PDF</button>
           </form>
+        </div>
+        <div className="w-1/6 p-2">  {/* Reduced padding here */}
+          <h2 className="text-lg font-semibold mb-2">Suggestions</h2>  {/* Reduced margin here */}
+          <div className="text-gray-500">Here you will see suggestions for improving your CV based on the job description.</div>
         </div>
       </div>
     </div>
