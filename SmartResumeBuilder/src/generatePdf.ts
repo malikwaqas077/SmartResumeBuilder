@@ -172,8 +172,8 @@ export async function generatePDF(userData: UserData, mode: PdfMode = 'download'
         const textX = dutyX + bulletWidth;
         const maxWidth = leftColumnWidth - textX;
 
-        const lines = doc.splitTextToSize(dutyText, maxWidth);
-        lines.forEach((line, i) => {
+        const lines: string[] = doc.splitTextToSize(dutyText, maxWidth);
+        lines.forEach((line: string, i: number) => {
           if (i === 0) {
             doc.text(bullet + line, dutyX, currentY);
           } else {
@@ -222,8 +222,8 @@ export async function generatePDF(userData: UserData, mode: PdfMode = 'download'
       doc.text(`${honor.year} | ${honor.location}`, rightColumnStartX, rightColumnY);
       rightColumnY += 6;
 
-      const honorDetailLines = doc.splitTextToSize(honor.detail, rightColumnWidth - 10);
-      honorDetailLines.forEach(line => {
+      const honorDetailLines: string[] = doc.splitTextToSize(honor.detail, rightColumnWidth - 10);
+      honorDetailLines.forEach((line: string) => {
         doc.text(line, rightColumnStartX, rightColumnY);
         rightColumnY += 4;
       });
@@ -243,8 +243,8 @@ export async function generatePDF(userData: UserData, mode: PdfMode = 'download'
       rightColumnY += 4;
 
       doc.setFontSize(10).setFont('helvetica', 'normal');
-      const projectDescLines = doc.splitTextToSize(project.description, rightColumnWidth - 10);
-      projectDescLines.forEach(line => {
+      const projectDescLines: string[] = doc.splitTextToSize(project.description, rightColumnWidth - 10);
+      projectDescLines.forEach((line: string) => {
         doc.text(line, rightColumnStartX, rightColumnY);
         rightColumnY += 4;
       });

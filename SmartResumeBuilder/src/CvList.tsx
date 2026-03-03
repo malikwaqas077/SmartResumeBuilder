@@ -1,6 +1,3 @@
-import React from 'react';
-import axios from 'axios';
-
 interface UserData {
   _id?: string;
   name: string;
