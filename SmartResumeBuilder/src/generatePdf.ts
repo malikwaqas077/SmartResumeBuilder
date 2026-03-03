@@ -51,7 +51,9 @@ interface Project {
   description: string;
 }
 
-export async function generatePDF(userData: UserData) {
+type PdfMode = 'download' | 'preview';
+
+export async function generatePDF(userData: UserData, mode: PdfMode = 'download') {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   let currentY = 20;
@@ -250,6 +252,10 @@ export async function generatePDF(userData: UserData) {
     });
   }
 
-  // Save the PDF
+  // Depending on mode, either trigger a download or return the jsPDF instance
+  if (mode === 'preview') {
+    return doc;
+  }
+
   doc.save('Resume.pdf');
 }
