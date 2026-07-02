@@ -35,7 +35,16 @@ interface Experience {
   position: string;
   duration: string;
   city: string;
-  project: string;
+  // Legacy single-project shape (still supported if `projects` is absent).
+  project?: string;
+  duties?: string[];
+  // Preferred shape: one company/role block, multiple named projects underneath.
+  projects?: ExperienceProject[];
+}
+
+interface ExperienceProject {
+  name: string;
+  technologies?: string;
   duties: string[];
 }
 
@@ -88,10 +97,22 @@ function App() {
           position: 'Software Engineer',
           duration: '2022 - Present',
           city: 'Remote',
-          project: 'Smart Resume Builder',
-          duties: [
-            'Built and maintained modern React applications.',
-            'Collaborated with designers to create delightful user experiences.',
+          projects: [
+            {
+              name: 'Smart Resume Builder',
+              technologies: 'React, TypeScript',
+              duties: [
+                'Built and maintained modern React applications.',
+                'Collaborated with designers to create delightful user experiences.',
+              ],
+            },
+            {
+              name: 'Internal Analytics Dashboard',
+              technologies: 'Node.js, AWS',
+              duties: [
+                'Shipped a dashboard for internal usage metrics on AWS Lambda.',
+              ],
+            },
           ],
         },
       ],

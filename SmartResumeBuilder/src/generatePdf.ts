@@ -35,7 +35,16 @@ interface Experience {
   position: string;
   duration: string;
   city: string;
-  project: string; // Updated property name
+  // Legacy single-project shape (still supported if `projects` is absent).
+  project?: string;
+  duties?: string[];
+  // Preferred shape: one company/role block, multiple named projects underneath.
+  projects?: ExperienceProject[];
+}
+
+interface ExperienceProject {
+  name: string;
+  technologies?: string;
   duties: string[];
 }
 
@@ -142,7 +151,8 @@ export async function generatePDF(userData: UserData, mode: PdfMode = 'download'
     doc.text('Experience', leftColumnStartX, currentY);
     currentY += 6;
 
-    userData.experience.forEach(exp => {
+    userData.experience.forEach((exp) => {
+      // Position + technologies, once per role.
       doc.setFontSize(10).setFont('helvetica', 'bold');
       let positionTechPart = `${exp.position} (${exp.technologies})`;
       doc.text(positionTechPart, leftColumnStartX, currentY);
@@ -150,39 +160,49 @@ export async function generatePDF(userData: UserData, mode: PdfMode = 'download'
       doc.line(leftColumnStartX, currentY + 2, leftColumnStartX + posTechWidth, currentY + 2);
       currentY += 6;
 
+      // Company + duration + city, once per role (not repeated per project).
       doc.setFontSize(10).setFont('helvetica', 'normal');
       let companyPart = `${exp.companyName}, ${exp.duration}, ${exp.city}`;
       doc.text(companyPart, leftColumnStartX, currentY);
       currentY += 6;
 
-      // Use exp.project instead of exp.softwareName
-      if (exp.project) {
-        doc.setFont('helvetica', 'bold');
-        doc.text(`${exp.project}`, leftColumnStartX, currentY); // Project Name
+      // Support both shapes: new `projects` array (preferred), or legacy single `project`/`duties`.
+      const projectList: ExperienceProject[] =
+        exp.projects && exp.projects.length > 0
+          ? exp.projects
+          : exp.project
+          ? [{ name: exp.project, duties: exp.duties || [] }]
+          : [];
+
+      projectList.forEach((proj, projIndex) => {
+        doc.setFontSize(10).setFont('helvetica', 'bold');
+        const projectHeading = proj.technologies ? `${proj.name} (${proj.technologies})` : proj.name;
+        doc.text(projectHeading, leftColumnStartX, currentY);
         currentY += 6;
-      }
 
-      // Duties
-      doc.setFontSize(10).setFont('helvetica', 'normal');
-      exp.duties.forEach(duty => {
-        const bullet = '• ';
-        const dutyText = duty;
-        const bulletWidth = doc.getTextWidth(bullet);
-        const dutyX = leftColumnStartX + 5;
-        const textX = dutyX + bulletWidth;
-        const maxWidth = leftColumnWidth - textX;
+        doc.setFontSize(10).setFont('helvetica', 'normal');
+        proj.duties.forEach(duty => {
+          const bullet = '• ';
+          const dutyText = duty;
+          const bulletWidth = doc.getTextWidth(bullet);
+          const dutyX = leftColumnStartX + 5;
+          const textX = dutyX + bulletWidth;
+          const maxWidth = leftColumnWidth - textX;
 
-        const lines: string[] = doc.splitTextToSize(dutyText, maxWidth);
-        lines.forEach((line: string, i: number) => {
-          if (i === 0) {
-            doc.text(bullet + line, dutyX, currentY);
-          } else {
-            doc.text(line, textX, currentY);
-          }
-          currentY += 4;
+          const lines: string[] = doc.splitTextToSize(dutyText, maxWidth);
+          lines.forEach((line: string, i: number) => {
+            if (i === 0) {
+              doc.text(bullet + line, dutyX, currentY);
+            } else {
+              doc.text(line, textX, currentY);
+            }
+            currentY += 4;
+          });
         });
+
+        // Small gap between projects within the same role; bigger gap after the last one.
+        currentY += projIndex < projectList.length - 1 ? 4 : 10;
       });
-      currentY += 10;
     });
   }
 
